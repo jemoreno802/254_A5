@@ -70,7 +70,7 @@ class Fork {
     private int orig_y;
     private int x;
     private int y;
-    public Lock l;
+    public Lock lock;
 
     // Constructor.
     // cx and cy indicate coordinates of center.
@@ -140,6 +140,7 @@ class Philosopher extends Thread {
     private Fork right_fork;
     private Random prn;
     private Color color;
+    private int philNum;
 
     // Constructor.
     // cx and cy indicate coordinates of center
@@ -147,7 +148,7 @@ class Philosopher extends Thread {
     // of bounding box instead.
     //
     public Philosopher(Table T, int cx, int cy,
-                       Fork lf, Fork rf, Coordinator C) {
+                       Fork lf, Fork rf, Coordinator C, int num) {
         t = T;
         x = cx;
         y = cy;
@@ -156,6 +157,7 @@ class Philosopher extends Thread {
         c = C;
         prn = new Random();
         color = THINK_COLOR;
+        philNum = num;
     }
 
     // start method of Thread calls run; you don't
@@ -166,6 +168,9 @@ class Philosopher extends Thread {
                 if (c.gate()) delay(EAT_TIME/2.0);
                 think();
                 if (c.gate()) delay(THINK_TIME/2.0);
+                while(left_fork.lock.tryLock()){}
+                yield();
+                while(right_fork.lock.tryLock()){}
                 hunger();
                 if (c.gate()) delay(FUMBLE_TIME/2.0);
                 eat();
@@ -210,34 +215,39 @@ class Philosopher extends Thread {
     }
 
     private void think() throws ResetException {
-        color = THINK_COLOR;
+        System.out.println("Philosopher " + philNum + " thinking");
+        color = THINK_COLOR; //BLUE
         t.repaint();
         delay(THINK_TIME);
     }
 
     private void hunger() throws ResetException {
-        color = WAIT_COLOR;
+        System.out.println("Philosopher " + philNum + " waiting");
+
+        color = WAIT_COLOR; //RED
         t.repaint();
         delay(FUMBLE_TIME);
-        while(!left_fork.l.tryLock()){
-        }
+        //while(!left_fork.lock.tryLock()){
+        //}
         left_fork.acquire(x, y);
         yield();    // you aren't allowed to remove this
-        while(!right_fork.l.tryLock()){
+       // while(!right_fork.lock.tryLock()){
 
-        }
+        //}
         right_fork.acquire(x, y);
     }
 
     private void eat() throws ResetException {
-        color = EAT_COLOR;
+        System.out.println("Philosopher " + philNum + " eating");
+
+        color = EAT_COLOR;  
         t.repaint();
         delay(EAT_TIME);
-        left_fork.l.unlock();
         left_fork.release();
+        left_fork.lock.unlock();
         yield();    // you aren't allowed to remove this
-        right_fork.l.unlock();
         right_fork.release();
+        right_fork.lock.unlock();
     }
 }
 
@@ -313,7 +323,7 @@ class Table extends JPanel {
                 (int) (CANVAS_SIZE/2.0 - CANVAS_SIZE/3.0 * Math.sin(angle)),
                 forks[i],
                 forks[(i+1) % NUM_PHILS],
-                c);
+                c, (i+1));
             philosophers[i].start();
         }
     }
