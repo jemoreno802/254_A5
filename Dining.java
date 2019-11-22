@@ -70,7 +70,7 @@ class Fork {
     private int orig_y;
     private int x;
     private int y;
-    public Lock lock;
+    public ReentrantLock lock;
 
     // Constructor.
     // cx and cy indicate coordinates of center.
@@ -83,7 +83,7 @@ class Fork {
         orig_y = cy;
         x = cx;
         y = cy;
-        l = new ReentrantLock();
+        lock = new ReentrantLock();
     }
 
     public void reset() {
@@ -168,9 +168,6 @@ class Philosopher extends Thread {
                 if (c.gate()) delay(EAT_TIME/2.0);
                 think();
                 if (c.gate()) delay(THINK_TIME/2.0);
-                while(left_fork.lock.tryLock()){}
-                yield();
-                while(right_fork.lock.tryLock()){}
                 hunger();
                 if (c.gate()) delay(FUMBLE_TIME/2.0);
                 eat();
@@ -216,38 +213,37 @@ class Philosopher extends Thread {
 
     private void think() throws ResetException {
         System.out.println("Philosopher " + philNum + " thinking");
-        color = THINK_COLOR; //BLUE
+        color = THINK_COLOR;
         t.repaint();
         delay(THINK_TIME);
     }
 
-    private void hunger() throws ResetException {
+    private synchronized void hunger() throws ResetException {
         System.out.println("Philosopher " + philNum + " waiting");
-
-        color = WAIT_COLOR; //RED
+        color = WAIT_COLOR;
         t.repaint();
         delay(FUMBLE_TIME);
-        //while(!left_fork.lock.tryLock()){
-        //}
+        left_fork.lock.lock();
+        //while(!left_fork.lock.tryLock());
         left_fork.acquire(x, y);
         yield();    // you aren't allowed to remove this
-       // while(!right_fork.lock.tryLock()){
-
-        //}
+       // while(!right_fork.lock.tryLock());
+        right_fork.lock.lock();
         right_fork.acquire(x, y);
     }
 
     private void eat() throws ResetException {
         System.out.println("Philosopher " + philNum + " eating");
-
-        color = EAT_COLOR;  
+        //boolean held = left_fork.lock.isHeldByCurrentThread();
+        //System.out.println("leftFork: " + left_fork.lock.isHeldByCurrentThread() + "rightFork: " + right_fork.lock.isHeldByCurrentThread());
+        color = EAT_COLOR;
         t.repaint();
         delay(EAT_TIME);
-        left_fork.release();
         left_fork.lock.unlock();
+        left_fork.release();
         yield();    // you aren't allowed to remove this
-        right_fork.release();
         right_fork.lock.unlock();
+        right_fork.release();
     }
 }
 
