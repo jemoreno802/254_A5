@@ -218,13 +218,13 @@ class Philosopher extends Thread {
         delay(THINK_TIME);
     }
 
-    private synchronized void hunger() throws ResetException {
+    private void hunger() throws ResetException {
         System.out.println("Philosopher " + philNum + " waiting");
         color = WAIT_COLOR;
         t.repaint();
         delay(FUMBLE_TIME);
+        while(left_fork.lock.isLocked() || right_fork.lock.isLocked());
         left_fork.lock.lock();
-        //while(!left_fork.lock.tryLock());
         left_fork.acquire(x, y);
         yield();    // you aren't allowed to remove this
        // while(!right_fork.lock.tryLock());
