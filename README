@@ -1,0 +1,10 @@
+Authors: Clayton Emmel, Jacquelyn Moreno
+
+Our code uses Java's Reentrant lock libraries to create a lock object for each fork which ensures
+only one thread (philosopher) is allowed access to each fork at once.
+
+Run:
+javac Dining.java
+java Dining > log.txt
+python check.py log.txt
+

@@ -222,9 +222,9 @@ class Philosopher extends Thread {
         color = WAIT_COLOR;
         t.repaint();
         delay(FUMBLE_TIME);
-        while(left_fork.lock.isLocked() || right_fork.lock.isLocked());
+        while(left_fork.lock.isLocked() || right_fork.lock.isLocked());//Spin on lock availability
         left_fork.lock.lock();
-        left_fork.acquire(x, y);
+        left_fork.acquire(x, y);//Acquire locks when available
         yield();    // you aren't allowed to remove this
         right_fork.lock.lock();
         right_fork.acquire(x, y);
@@ -236,7 +236,7 @@ class Philosopher extends Thread {
         t.repaint();
         delay(EAT_TIME);
         System.out.println("Philosopher " + philNum + " thinking");
-        left_fork.lock.unlock();
+        left_fork.lock.unlock();//Unlock and return forks after done eating
         left_fork.release();
         yield();    // you aren't allowed to remove this
         right_fork.lock.unlock();
